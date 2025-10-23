@@ -8,10 +8,23 @@ import { Card } from "@/components/ui/card";
 import { Loader2, CheckCircle, XCircle, RefreshCcw, Lock, Undo2 } from "lucide-react";
 import { motion } from "framer-motion";
 
+// ✅ Define Affiliate type
+interface Affiliate {
+  id: string;
+  name: string;
+  mpesa: string;
+  earnings?: number;
+  referrals?: number;
+  verified?: boolean;
+  status?: string;
+  referrer_id?: string | null;
+  created_at: string;
+}
+
 export default function AdminDashboard() {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [authError, setAuthError] = useState(false);
-  const [affiliates, setAffiliates] = useState<any[]>([]);
+  const [affiliates, setAffiliates] = useState<Affiliate[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
@@ -44,13 +57,13 @@ export default function AdminDashboard() {
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (error) {
+    if (error || !data) {
       setLoading(false);
       return;
     }
 
-    const enriched = await Promise.all(
-      data.map(async (a) => {
+    const enriched: Affiliate[] = await Promise.all(
+      data.map(async (a: Affiliate) => {
         const { count } = await supabase
           .from("affiliates")
           .select("*", { count: "exact", head: true })
@@ -82,7 +95,7 @@ export default function AdminDashboard() {
   }, []);
 
   // ✅ Verify user
-  const handleVerifyUser = async (user: any) => {
+  const handleVerifyUser = async (user: Affiliate) => {
     try {
       const { error: updateErr } = await supabase
         .from("affiliates")
@@ -113,13 +126,14 @@ export default function AdminDashboard() {
 
       alert(`${user.name} verified successfully.`);
       fetchData();
-    } catch (e: any) {
-      alert("Error verifying user: " + e.message);
+    } catch (e: unknown) {
+      const err = e as Error;
+      alert("Error verifying user: " + err.message);
     }
   };
 
   // ↩️ Undo verification
-  const handleUndoVerification = async (user: any) => {
+  const handleUndoVerification = async (user: Affiliate) => {
     if (!confirm(`Undo verification for ${user.name}?`)) return;
     try {
       const { error } = await supabase
@@ -129,8 +143,9 @@ export default function AdminDashboard() {
       if (error) throw error;
       alert(`Verification undone for ${user.name}.`);
       fetchData();
-    } catch (e: any) {
-      alert("Error undoing verification: " + e.message);
+    } catch (e: unknown) {
+      const err = e as Error;
+      alert("Error undoing verification: " + err.message);
     }
   };
 
@@ -158,8 +173,9 @@ export default function AdminDashboard() {
         if (error) throw error;
       }
       fetchData();
-    } catch (e: any) {
-      alert("Error updating status: " + e.message);
+    } catch (e: unknown) {
+      const err = e as Error;
+      alert("Error updating status: " + err.message);
     }
   };
 

@@ -2,12 +2,21 @@ import { NextRequest, NextResponse } from "next/server";
 import fetch from "node-fetch";
 import FormDataNode from "form-data";
 
-export async function POST(req: NextRequest) {
+// ✅ Telegram API response type
+interface TelegramResponse {
+  ok: boolean;
+  result?: unknown;
+  description?: string;
+}
+
+export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
 
-    if (!file) return NextResponse.json({ ok: false, error: "No file provided" });
+    if (!file) {
+      return NextResponse.json({ ok: false, error: "No file provided" });
+    }
 
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
@@ -28,18 +37,24 @@ export async function POST(req: NextRequest) {
     );
 
     // Safely parse JSON
-    let tgData: any;
+    let tgData: TelegramResponse;
     try {
-      tgData = await tgRes.json();
+      tgData = (await tgRes.json()) as TelegramResponse;
     } catch (jsonErr) {
       console.error("Failed to parse Telegram response:", jsonErr);
-      return NextResponse.json({ ok: false, error: "Invalid response from Telegram" });
+      return NextResponse.json({
+        ok: false,
+        error: "Invalid response from Telegram",
+      });
     }
 
     // Check if Telegram responded with OK
     if (!tgData || !tgData.ok) {
       console.error("Telegram API error:", tgData);
-      return NextResponse.json({ ok: false, error: tgData?.description || "Unknown error" });
+      return NextResponse.json({
+        ok: false,
+        error: tgData?.description || "Unknown error",
+      });
     }
 
     return NextResponse.json({ ok: true, result: tgData.result });

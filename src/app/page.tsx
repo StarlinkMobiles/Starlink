@@ -8,10 +8,23 @@ import { supabase } from "@/lib/supabaseClient";
 import { Copy, Loader2, Upload } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
+// Proper TypeScript interface
+interface Affiliate {
+  id: string;
+  name: string;
+  mpesa: string;
+  verified: boolean;
+  earnings: number;
+  referrals: number;
+  status: string;
+  created_at?: string;
+  referrer_id?: string | null;
+}
+
 export default function AffiliateDashboard() {
   const [name, setName] = useState("");
   const [mpesa, setMpesa] = useState("");
-  const [user, setUser] = useState<any | null>(null);
+  const [user, setUser] = useState<Affiliate | null>(null);
   const [refLink, setRefLink] = useState("");
   const [proof, setProof] = useState<File | null>(null);
   const [copied, setCopied] = useState(false);
@@ -22,7 +35,7 @@ export default function AffiliateDashboard() {
     const stored = localStorage.getItem("affiliate_user");
     if (stored) {
       try {
-        const parsed = JSON.parse(stored);
+        const parsed = JSON.parse(stored) as Affiliate;
         if (parsed && parsed.id) {
           setUser(parsed);
           setRefLink(`${window.location.origin}/?ref=${parsed.id}`);
@@ -107,7 +120,7 @@ export default function AffiliateDashboard() {
         return;
       }
 
-      const newUser = insertResp.data;
+      const newUser = insertResp.data as Affiliate;
       newUser.referrals = 0;
       localStorage.setItem("affiliate_user", JSON.stringify(newUser));
       setUser(newUser);
@@ -121,34 +134,6 @@ export default function AffiliateDashboard() {
     }
   };
 
-  const handleProofUpload = async () => {
-    if (!proof) return alert("Select a screenshot first.");
-    if (!user) return alert("You must register first.");
-
-    setLoading(true);
-    try {
-      const fileName = `${Date.now()}-${proof.name.replace(/\s+/g, "_")}`;
-      const path = `${user.id}/${fileName}`;
-
-      const uploadResp = await supabase.storage.from("proofs").upload(path, proof);
-      if (uploadResp.error) throw uploadResp.error;
-
-      const { data: urlData } = supabase.storage.from("proofs").getPublicUrl(path);
-      const publicUrl = urlData?.publicUrl || "";
-
-      await supabase.from("proofs").insert([{ affiliate_id: user.id, file_name: proof.name, file_url: publicUrl, verified: false }]);
-      await supabase.from("affiliates").update({ status: "Under Review" }).eq("id", user.id);
-      await refreshUserFromDb(user.id);
-
-      alert("✅ Proof uploaded — admin will review shortly.");
-    } catch (err) {
-      console.error("handleProofUpload error:", err);
-      alert("Upload failed. Try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const copyLink = () => {
     if (!refLink) return;
     navigator.clipboard.writeText(refLink);
@@ -156,49 +141,47 @@ export default function AffiliateDashboard() {
     setTimeout(() => setCopied(false), 1500);
   };
 
- useEffect(() => {
-  if (!user?.id) return;
+  useEffect(() => {
+    if (!user?.id) return;
 
-  const channel = supabase
-    .channel("affiliate_admin")
-    .on(
-      "postgres_changes",
-      {
-        event: "UPDATE",
-        schema: "public",
-        table: "affiliates",
-        filter: `id=eq.${user.id}`,
-      },
-      async (payload) => {
-        if (payload.new) {
-          try {
-            const refreshed = payload.new;
+    const channel = supabase
+      .channel("affiliate_admin")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "affiliates",
+          filter: `id=eq.${user.id}`,
+        },
+        async (payload) => {
+          if (payload.new) {
+            try {
+              const refreshed = payload.new as Affiliate;
 
-            // compute referrals count
-            const { count } = await supabase
-              .from("affiliates")
-              .select("*", { count: "exact", head: true })
-              .eq("referrer_id", refreshed.id);
+              const { count } = await supabase
+                .from("affiliates")
+                .select("*", { count: "exact", head: true })
+                .eq("referrer_id", refreshed.id);
 
-            refreshed.referrals = count || refreshed.referrals || 0;
-            setUser(refreshed);
-            localStorage.setItem("affiliate_user", JSON.stringify(refreshed));
-            setRefLink(`${window.location.origin}/?ref=${refreshed.id}`);
-          } catch (err) {
-            console.error("Error handling realtime payload:", err);
-            setUser(payload.new);
-            localStorage.setItem("affiliate_user", JSON.stringify(payload.new));
+              refreshed.referrals = count || refreshed.referrals || 0;
+              setUser(refreshed);
+              localStorage.setItem("affiliate_user", JSON.stringify(refreshed));
+              setRefLink(`${window.location.origin}/?ref=${refreshed.id}`);
+            } catch (err) {
+              console.error("Error handling realtime payload:", err);
+              setUser(payload.new as Affiliate);
+              localStorage.setItem("affiliate_user", JSON.stringify(payload.new));
+            }
           }
         }
-      }
-    )
-    .subscribe();
+      )
+      .subscribe();
 
-  return () => {
-    supabase.removeChannel(channel);
-  };
-}, [user?.id]);
-
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -229,7 +212,7 @@ export default function AffiliateDashboard() {
           <h1 className="text-4xl sm:text-6xl font-extrabold text-green-700 mb-4 drop-shadow-lg">🚀 Vilafly Affiliate Portal</h1>
           <p className="text-lg sm:text-xl font-semibold text-green-800">
             Earn 150Kes instantly! Use a valid <span className="font-bold text-green-900">M-Pesa number</span>. 💸
-          --,verify,paid</p>
+          </p>
         </div>
 
         <AnimatePresence mode="wait">
@@ -249,78 +232,58 @@ export default function AffiliateDashboard() {
             </motion.div>
           ) : (
             <motion.div key="dashboard" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="space-y-6 sm:space-y-8">
-  
-{/* 🧮 Smart Stats Section */}
-<section className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-  {(() => {
-    const isNew = !user?.verified && (user?.earnings ?? 0) === 0;
-    const isVerified = user?.verified;
-    const hasReferrals = (user?.referrals ?? 0) > 0;
-    const isPaid = user?.status === "Paid";
-    const isRejected = user?.status === "Rejected";
-    const isPendingPayment = isVerified && !isPaid && !isRejected;
+              {/* 🧮 Stats Section */}
+              <section className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                {(() => {
+                  const isNew = !user?.verified && user?.earnings === 0;
+                  const isVerified = user?.verified;
+                  const hasReferrals = user?.referrals > 0;
+                  const isPaid = user?.status === "Paid";
+                  const isRejected = user?.status === "Rejected";
+                  const isPendingPayment = isVerified && !isPaid && !isRejected;
 
-    const stats = [
-      {
-        title: "Earnings",
-        value: `KES ${user?.earnings ?? 0}`,
-        color: isPaid ? "green" : isPendingPayment ? "yellow" : "gray",
-        note: isPaid
-          ? "Payout sent 🎉"
-          : isPendingPayment
-          ? "Verified — waiting for payment ⏳"
-          : "No earnings yet — invite friends to earn 💸",
-      },
-      {
-        title: "Referrals",
-        value: user?.referrals ?? 0,
-        color: hasReferrals ? "lime" : "gray",
-        note: hasReferrals
-          ? "Great job! Keep inviting friends 🚀"
-          : "Share your link to earn 100 KES per friend",
-      },
-      {
-        title: "Status",
-        value: user?.status ?? "Pending",
-        color: isPaid ? "green" : isRejected ? "red" : "yellow",
-        note: isPaid
-          ? "You’ve been paid ✅"
-          : isRejected
-          ? "Proof not approved ❌"
-          : isPendingPayment
-          ? "Verified — awaiting payment ⏳"
-          : "Awaiting admin review ⏳",
-      },
-      {
-        title: "Joined",
-        value: user?.created_at
-          ? new Date(user.created_at).toLocaleDateString()
-          : "—",
-        color: isNew ? "blue" : "teal",
-        note: isNew
-          ? "Welcome aboard! 🎉"
-          : "Glad to have you with us 💜",
-      },
-    ];
+                  const stats = [
+                    {
+                      title: "Earnings",
+                      value: `KES ${user?.earnings ?? 0}`,
+                      color: isPaid ? "green" : isPendingPayment ? "yellow" : "gray",
+                      note: isPaid ? "Payout sent 🎉" : isPendingPayment ? "Verified — waiting for payment ⏳" : "No earnings yet — invite friends to earn 💸",
+                    },
+                    {
+                      title: "Referrals",
+                      value: user?.referrals ?? 0,
+                      color: hasReferrals ? "lime" : "gray",
+                      note: hasReferrals ? "Great job! Keep inviting friends 🚀" : "Share your link to earn 100 KES per friend",
+                    },
+                    {
+                      title: "Status",
+                      value: user?.status ?? "Pending",
+                      color: isPaid ? "green" : isRejected ? "red" : "yellow",
+                      note: isPaid
+                        ? "You&apos;ve been paid ✅"
+                        : isRejected
+                        ? "Proof not approved ❌"
+                        : isPendingPayment
+                        ? "Verified — awaiting payment ⏳"
+                        : "Awaiting admin review ⏳",
+                    },
+                    {
+                      title: "Joined",
+                      value: user?.created_at ? new Date(user.created_at).toLocaleDateString() : "—",
+                      color: isNew ? "blue" : "teal",
+                      note: isNew ? "Welcome aboard! 🎉" : "Glad to have you with us 💜",
+                    },
+                  ];
 
-    return stats.map((stat, idx) => (
-      <div
-        key={idx}
-        className={`bg-${stat.color}-100 p-4 rounded-2xl shadow-md hover:shadow-lg transition-shadow`}
-      >
-        <p className={`text-xs text-${stat.color}-700 font-medium`}>
-          {stat.title}
-        </p>
-        <h2 className={`text-2xl font-bold text-${stat.color}-800`}>
-          {stat.value}
-        </h2>
-        <p className={`text-xs text-${stat.color}-600`}>{stat.note}</p>
-      </div>
-    ));
-  })()}
-</section>
-
-
+                  return stats.map((stat, idx) => (
+                    <div key={idx} className={`bg-${stat.color}-100 p-4 rounded-2xl shadow-md hover:shadow-lg transition-shadow`}>
+                      <p className={`text-xs text-${stat.color}-700 font-medium`}>{stat.title}</p>
+                      <h2 className={`text-2xl font-bold text-${stat.color}-800`}>{stat.value}</h2>
+                      <p className={`text-xs text-${stat.color}-600`}>{stat.note}</p>
+                    </div>
+                  ));
+                })()}
+              </section>
 
               {/* Step 1 */}
               <section className="p-6 bg-green-100 border-2 border-green-400 rounded-2xl text-center shadow-md hover:shadow-lg transition-shadow">
@@ -331,53 +294,43 @@ export default function AffiliateDashboard() {
                 <p className="text-lg text-green-800 mt-3">Ask at least <span className="font-bold">one question</span> in the app before taking a screenshot. ✅</p>
               </section>
 
+              {/* Step 3: Telegram Proof */}
               <section className="bg-white/90 rounded-2xl p-6 shadow-lg text-center border-2 border-green-300">
-  <h3 className="text-2xl font-bold text-green-700 mb-3">Step 3: Upload Proof Screenshot</h3>
-  <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-    <input
-      type="file"
-      accept="image/*"
-      onChange={(e) => setProof(e.target.files?.[0] || null)}
-      className="border p-3 rounded-2xl text-lg"
-    />
-    <Button
-      onClick={async () => {
-        if (!proof) return alert("Select a screenshot first.");
-        setLoading(true);
-        try {
-          const formData = new FormData();
-          formData.append("file", proof);
+                <h3 className="text-2xl font-bold text-green-700 mb-3">Step 3: Upload Proof Screenshot</h3>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                  <input type="file" accept="image/*" onChange={(e) => setProof(e.target.files?.[0] || null)} className="border p-3 rounded-2xl text-lg" />
+                  <Button
+                    onClick={async () => {
+                      if (!proof) return alert("Select a screenshot first.");
+                      setLoading(true);
+                      try {
+                        const formData = new FormData();
+                        formData.append("file", proof);
 
-          const res = await fetch("/api/sendProof", {
-            method: "POST",
-            body: formData,
-          });
+                        const res = await fetch("/api/sendProof", { method: "POST", body: formData });
+                        const data = await res.json();
 
-          const data = await res.json();
-          if (data.ok) {
-            alert("✅ Proof sent to Telegram!");
-          } else {
-            console.error(data);
-            alert("❌ Failed to send proof.");
-          }
-        } catch (err) {
-          console.error(err);
-          alert("❌ Error sending proof.");
-        } finally {
-          setLoading(false);
-        }
-      }}
-      className="bg-green-600 hover:bg-green-700 text-white text-2xl py-4 font-bold flex items-center gap-3 rounded-2xl shadow-md"
-    >
-      <Upload className="w-5 h-5" /> Submit Proof
-    </Button>
-  </div>
-  <p className="text-lg text-green-900 mt-3">
-    Your Proof will be verified as soon as possible. Make sure it's clear! ⚠️ Do not upload personal info.
-  </p>
-</section>
+                        if (data.ok) alert("✅ Proof sent to Telegram!");
+                        else {
+                          console.error(data);
+                          alert("❌ Failed to send proof.");
+                        }
+                      } catch (err) {
+                        console.error(err);
+                        alert("❌ Error sending proof.");
+                      } finally {
+                        setLoading(false);
+                      }
+                    }}
+                    className="bg-green-600 hover:bg-green-700 text-white text-2xl py-4 font-bold flex items-center gap-3 rounded-2xl shadow-md"
+                  >
+                    <Upload className="w-5 h-5" /> Submit Proof
+                  </Button>
+                </div>
+                <p className="text-lg text-green-900 mt-3">Your Proof will be sent to Telegram immediately. Make sure it&apos;s clear! ⚠️ Do not upload personal info.</p>
+              </section>
 
-              {/* Step 2 */}
+              {/* Step 2: Referral Link */}
               <section className="p-6 bg-green-50 border-2 border-green-400 rounded-2xl text-center shadow-md hover:shadow-lg transition-shadow">
                 <h3 className="text-2xl font-bold text-green-700 mb-3">Step 2: Share Your Referral Link</h3>
                 <div className="flex flex-col sm:flex-row items-center border rounded-2xl overflow-hidden bg-gray-50">

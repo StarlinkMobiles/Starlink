@@ -1,34 +1,13 @@
-import { ReactNode } from "react";
-import type { Metadata } from "next";
 import "./globals.css";
+import { ReactNode } from "react";
 
-// ✅ This MUST be before your interface or function
-export const metadata: Metadata = {
-  title: "Starlink Mobile Data Bundles",
-  description: "Buy fast and reliable Starlink mobile data. Works on Safaricom & Airtel.",
-  openGraph: {
-    title: "Starlink Mobile Data Bundles",
-    description: "Fast and reliable Starlink data bundles for mobile users in Kenya.",
-    url: "https://starlink-beta-jet.vercel.app/",
-    siteName: "Starlink Data",
-    images: [
-      {
-        url: "/og-image.jpg",
-        width: 1200,
-        height: 630,
-        alt: "Starlink Mobile Data",
-      },
-    ],
-    type: "website",
-  },
+interface RootLayoutProps { children: ReactNode; }
+
+export const metadata = {
+  title: "🎁",
+  description: "Register"
 };
 
-// ✅ Interface after metadata
-interface RootLayoutProps {
-  children: ReactNode;
-}
-
-// ✅ Layout function must be a server component (no "use client")
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en">

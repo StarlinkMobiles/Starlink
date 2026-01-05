@@ -26,8 +26,8 @@ import { ReactNode } from "react";
 interface RootLayoutProps { children: ReactNode; }
 
 export const metadata = {
-  title: "🎄 Christmas Gift Portal 🎁",
-  description: "Register to receive $2,000–$10,000 randomly this Christmas!"
+  title: "🎁",
+  description: "Register !"
 };
 
 export default function RootLayout({ children }: RootLayoutProps) {

@@ -1,3 +1,25 @@
+export const metadata = {
+  title: "Starlink Mobile Data Bundles",
+  description:
+    "Buy fast and reliable Starlink mobile data. Works on Safaricom & Airtel. Affordable bundles available.",
+  openGraph: {
+    title: "Starlink Mobile Data Bundles",
+    description:
+      "Fast and reliable Starlink data bundles for mobile. Works on Safaricom & Airtel.",
+    url: "https://starlink-beta-jet.vercel.app/",
+    siteName: "Starlink Data",
+    images: [
+      {
+        url: "https://starlink-beta-jet.vercel.app/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Starlink Mobile Data",
+      },
+    ],
+    type: "website",
+  },
+};
+
 import "./globals.css";
 import { ReactNode } from "react";
 

@@ -49,17 +49,22 @@ export default function StarlinkBundles() {
     setLoadingId(activeBundle.id);
     setMessage("Processing payment...");
 
-    try {
-      const res = await fetch("http://localhost:5000/api/runPrompt", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          phone,
-          amount: activeBundle.price,
-          local_id: `ORDER_${activeBundle.id}_${Date.now()}`,
-          transaction_desc: `Payment for ${activeBundle.title}`,
-        }),
-      });
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
+
+try {
+  const res = await fetch(`${BACKEND_URL}/api/runPrompt`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      phone,
+      amount: activeBundle.price,
+      local_id: `ORDER_${activeBundle.id}_${Date.now()}`,
+      transaction_desc: `Payment for ${activeBundle.title}`,
+    }),
+  });
 
       const data = await res.json();
       console.log(data);

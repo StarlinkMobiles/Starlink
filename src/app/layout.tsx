@@ -1,16 +1,18 @@
-export const metadata = {
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
   title: "Starlink Mobile Data Bundles",
   description:
-    "Buy fast and reliable Starlink mobile data. Works on Safaricom & Airtel. Affordable bundles available.",
+    "Buy fast and reliable Starlink mobile data. Works on Safaricom & Airtel.",
   openGraph: {
     title: "Starlink Mobile Data Bundles",
     description:
-      "Fast and reliable Starlink data bundles for mobile. Works on Safaricom & Airtel.",
+      "Fast and reliable Starlink data bundles for mobile users in Kenya.",
     url: "https://starlink-beta-jet.vercel.app/",
     siteName: "Starlink Data",
     images: [
       {
-        url: "https://starlink-beta-jet.vercel.app/og-image.jpg",
+        url: "/og-image.jpg",
         width: 1200,
         height: 630,
         alt: "Starlink Mobile Data",
@@ -19,6 +21,7 @@ export const metadata = {
     type: "website",
   },
 };
+
 
 import "./globals.css";
 import { ReactNode } from "react";

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { ReactNode } from "react";
 import "./globals.css";
 
+// ✅ Only ONE metadata export in this file
 export const metadata: Metadata = {
   title: "Starlink Mobile Data Bundles",
   description:

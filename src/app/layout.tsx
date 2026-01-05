@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { ReactNode } from "react";
+import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Starlink Mobile Data Bundles",
@@ -22,16 +24,9 @@ export const metadata: Metadata = {
   },
 };
 
-
-import "./globals.css";
-import { ReactNode } from "react";
-
-interface RootLayoutProps { children: ReactNode; }
-
-export const metadata = {
-  title: "🎁",
-  description: "Register !"
-};
+interface RootLayoutProps {
+  children: ReactNode;
+}
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (

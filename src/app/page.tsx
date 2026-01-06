@@ -98,7 +98,7 @@ try {
       {/* Filter */}
       <div className="max-w-6xl mx-auto px-4 mt-6">
         <div className="flex flex-wrap gap-2 justify-center">
-          {["all", "daily", "weekly", "monthly", "unlimited"].map((cat) => (
+          {["unlimited","all", "daily", "weekly", "monthly"].map((cat) => (
             <button
               key={cat}
               onClick={() => setSelected(cat as Category)}

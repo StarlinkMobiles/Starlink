@@ -14,6 +14,9 @@ type Bundle = {
 };
 
 const bundles: Bundle[] = [
+   { id: "u1", category: "unlimited", title: "3 Days - Unlimited", subtitle: "Short-term access", price: 130 },
+  { id: "u2", category: "unlimited", title: "7 Days - Unlimited", subtitle: "One full week", price: 220, badge: "POPULAR" },
+  { id: "u3", category: "unlimited", title: "30 Days - Unlimited", subtitle: "Unlimited browsing", price: 400 },
   { id: "d1", category: "daily", title: "24 Hours - 5GB", subtitle: "Short-term heavy usage", price: 70 },
   { id: "d2", category: "daily", title: "24 Hours - 10GB", subtitle: "Double data for intensive users", price: 120, badge: "HOT" },
   { id: "w1", category: "weekly", title: "3 Days - 8GB", subtitle: "Weekend browsing", price: 155, badge: "VALUE" },
@@ -24,9 +27,7 @@ const bundles: Bundle[] = [
   { id: "m2", category: "monthly", title: "30 Days - 25GB", subtitle: "Best seller", price: 299, badge: "POPULAR" },
   { id: "m3", category: "monthly", title: "30 Days - 50GB", subtitle: "Double monthly data", price: 450 },
   { id: "m4", category: "monthly", title: "30 Days - 100GB", subtitle: "Heavy usage", price: 699, badge: "HOT" },
-  { id: "u1", category: "unlimited", title: "3 Days - Unlimited", subtitle: "Short-term access", price: 130 },
-  { id: "u2", category: "unlimited", title: "7 Days - Unlimited", subtitle: "One full week", price: 220, badge: "POPULAR" },
-  { id: "u3", category: "unlimited", title: "30 Days - Unlimited", subtitle: "Unlimited browsing", price: 400 },
+ 
 ];
 
 export default function StarlinkBundles() {

@@ -157,29 +157,46 @@ export default function StarlinkBundles() {
         </div>
       </main>
 
+      {/* Modal */}
       {showModal && activeBundle && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
-          <div className="bg-green-50 p-6 rounded-xl w-full max-w-sm">
-            <h2 className="text-xl font-semibold mb-2">Starlink Payment</h2>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+          <div className="bg-green-50 max-w-sm w-full p-6 rounded-xl shadow-xl relative">
+            <button
+              onClick={() => setShowModal(false)}
+              className="absolute top-3 right-3 text-green-700 font-bold text-lg"
+            >
+              &times;
+            </button>
+            <h2 className="text-xl font-semibold text-green-800 mb-2">Starlink Payment</h2>
+<p className="text-green-700 text-xs mb-3 italic">
+        Enter M-Pesa number below you will be prompted to enter your PIN on your phone.
+      </p>            <p className="text-green-700 text-sm mb-4">{activeBundle.title} - Ksh {activeBundle.price}</p>
             <input
               type="tel"
-              placeholder="Enter M-Pesa number"
+              placeholder="Enter your M-Pesa number"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full px-4 py-2 border rounded mb-4"
+              className="w-full px-4 py-2 border border-green-300 rounded-md mb-4 focus:outline-none focus:ring-2 focus:ring-green-700"
             />
-            <button onClick={handleBuy} className="w-full bg-green-600 text-white py-2 rounded">
-              Pay Ksh {activeBundle.price}
+            <button
+              onClick={handleBuy}
+              disabled={loadingId === activeBundle.id}
+              className="w-full bg-green-600 text-white font-semibold py-2 rounded-md hover:bg-green-800 transition"
+            >
+              {loadingId === activeBundle.id ? "Processing..." : `Pay Ksh ${activeBundle.price}`}
             </button>
           </div>
         </div>
       )}
 
+      {/* Floating message */}
       {message && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-green-700 text-white px-6 py-3 rounded-xl">
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-green-700/90 text-white px-6 py-3 rounded-2xl shadow-lg text-sm z-50">
           {message}
         </div>
       )}
+
+      <footer className="text-center text-gray-400 text-[11px] py-5">&copy; {new Date().getFullYear()} Starlink Bundles</footer>
     </div>
   );
 }

@@ -12,6 +12,14 @@ type Bundle = {
   price: number;
   badge?: "HOT" | "POPULAR" | "VALUE";
 };
+const categoryOrder: Record<Category, number> = {
+  unlimited: 0,
+  daily: 1,
+  weekly: 2,
+  monthly: 3,
+  all: 99,
+};
+
 
 const bundles: Bundle[] = [
   { id: "u1", category: "unlimited", title: "3 Days - Unlimited", subtitle: "Short-term access", price: 130 },
@@ -40,15 +48,13 @@ export default function StarlinkBundles() {
   const [activeBundle, setActiveBundle] = useState<Bundle | null>(null);
   const [phone, setPhone] = useState("");
 
-  const filtered =
-    selected === "all"
-      ? [
-          ...bundles.filter(b => b.category === "unlimited"),
-          ...bundles.filter(b => b.category === "daily"),
-          ...bundles.filter(b => b.category === "weekly"),
-          ...bundles.filter(b => b.category === "monthly"),
-        ]
-      : bundles.filter(b => b.category === selected);
+ const filtered =
+  selected === "all"
+    ? [...bundles].sort(
+        (a, b) => categoryOrder[a.category] - categoryOrder[b.category]
+      )
+    : bundles.filter(b => b.category === selected);
+
 
   const handleBuy = async () => {
     if (!activeBundle) return;

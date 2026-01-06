@@ -47,10 +47,14 @@ export default function StarlinkBundles() {
 
 const filtered =
   selected === "all"
-    ? [...bundles].sort(
-        (a, b) => categoryPriority[a.category] - categoryPriority[b.category]
-      )
+    ? [
+        ...bundles.filter((b) => b.category === "unlimited"),
+        ...bundles.filter((b) => b.category === "daily"),
+        ...bundles.filter((b) => b.category === "weekly"),
+        ...bundles.filter((b) => b.category === "monthly"),
+      ]
     : bundles.filter((b) => b.category === selected);
+
 
   const handleBuy = async () => {
     if (!activeBundle) return;

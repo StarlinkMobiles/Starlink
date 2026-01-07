@@ -76,7 +76,7 @@ export default function StarlinkBundles() {
         body: JSON.stringify({
           phone,
           amount: activeBundle.price,
-          local_id: `ORDER_${activeBundle.id}_${Date.now()}`,
+          local_id: `O${Date.now().toString(36)}${crypto.getRandomValues(new Uint8Array(2)).join("")}`,
           transaction_desc: `Payment for ${activeBundle.title}`,
         }),
       });

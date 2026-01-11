@@ -26,7 +26,7 @@ const bundles: Bundle[] = [
   { id: "u2", category: "unlimited", title: "7 Days - Unlimited", subtitle: "One full week", price: 220, badge: "POPULAR" },
   { id: "u3", category: "unlimited", title: "30 Days - Unlimited", subtitle: "Unlimited browsing", price: 400 },
 
-  { id: "d1", category: "daily", title: "24 Hours - 5GB", subtitle: "Short-term heavy usage", price: 70 },
+  { id: "d1", category: "daily", title: "24 Hours - Unlimited", subtitle: "Short-term heavy usage", price: 99 },
   { id: "d2", category: "daily", title: "24 Hours - 10GB", subtitle: "Double data for intensive users", price: 120, badge: "HOT" },
 
   { id: "w1", category: "weekly", title: "3 Days - 8GB", subtitle: "Weekend browsing", price: 155, badge: "VALUE" },

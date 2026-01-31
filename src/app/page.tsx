@@ -12,7 +12,6 @@ type Bundle = {
   price: number;
   badge?: "HOT" | "POPULAR" | "VALUE";
 };
-
 const categoryOrder: Record<Category, number> = {
   unlimited: 0,
   daily: 1,
@@ -21,36 +20,24 @@ const categoryOrder: Record<Category, number> = {
   all: 99,
 };
 
-/* ✅ UPDATED OFFERS ONLY */
+
 const bundles: Bundle[] = [
-  {
-    id: "u1",
-    category: "unlimited",
-    title: "7 Days - Unlimited",
-    subtitle: "One week unlimited access",
-    price: 299,
-  },
-  {
-    id: "u2",
-    category: "unlimited",
-    title: "14 Days - Unlimited",
-    subtitle: "Two weeks unlimited access",
-    price: 499,
-  },
-  {
-    id: "u3",
-    category: "unlimited",
-    title: "50GB - Full Month",
-    subtitle: "Monthly capped data",
-    price: 699,
-  },
-  {
-    id: "u4",
-    category: "unlimited",
-    title: "Full Month - Unlimited",
-    subtitle: "Unlimited for 30 days",
-    price: 899,
-  },
+  { id: "u1", category: "unlimited", title: "3 Days - Unlimited", subtitle: "Short-term access", price: 130 },
+  { id: "u2", category: "unlimited", title: "7 Days - Unlimited", subtitle: "One full week", price: 220, badge: "POPULAR" },
+  { id: "u3", category: "unlimited", title: "30 Days - Unlimited", subtitle: "Unlimited browsing", price: 400 },
+
+  { id: "d1", category: "daily", title: "24 Hours - Unlimited", subtitle: "Short-term heavy usage", price: 99 },
+  { id: "d2", category: "daily", title: "24 Hours - 10GB", subtitle: "Double data for intensive users", price: 120, badge: "HOT" },
+
+  { id: "w1", category: "weekly", title: "3 Days - 8GB", subtitle: "Weekend browsing", price: 155, badge: "VALUE" },
+  { id: "w2", category: "weekly", title: "7 Days - 12GB", subtitle: "Full week connectivity", price: 180 },
+  { id: "w3", category: "weekly", title: "7 Days - 20GB", subtitle: "Streaming & downloads", price: 250 },
+  { id: "w4", category: "weekly", title: "14 Days - 15GB", subtitle: "Balanced two-week plan", price: 210 },
+
+  { id: "m1", category: "monthly", title: "21 Days - 18GB", subtitle: "Three-week package", price: 225 },
+  { id: "m2", category: "monthly", title: "30 Days - 25GB", subtitle: "Best seller", price: 299, badge: "POPULAR" },
+  { id: "m3", category: "monthly", title: "30 Days - 50GB", subtitle: "Double monthly data", price: 450 },
+  { id: "m4", category: "monthly", title: "30 Days - 100GB", subtitle: "Heavy usage", price: 699, badge: "HOT" },
 ];
 
 export default function StarlinkBundles() {
@@ -61,12 +48,13 @@ export default function StarlinkBundles() {
   const [activeBundle, setActiveBundle] = useState<Bundle | null>(null);
   const [phone, setPhone] = useState("");
 
-  const filtered =
-    selected === "all"
-      ? [...bundles].sort(
-          (a, b) => categoryOrder[a.category] - categoryOrder[b.category]
-        )
-      : bundles.filter((b) => b.category === selected);
+ const filtered =
+  selected === "all"
+    ? [...bundles].sort(
+        (a, b) => categoryOrder[a.category] - categoryOrder[b.category]
+      )
+    : bundles.filter(b => b.category === selected);
+
 
   const handleBuy = async () => {
     if (!activeBundle) return;
@@ -88,9 +76,7 @@ export default function StarlinkBundles() {
         body: JSON.stringify({
           phone,
           amount: activeBundle.price,
-          local_id: `O${Date.now().toString(36)}${crypto
-            .getRandomValues(new Uint8Array(2))
-            .join("")}`,
+          local_id: `O${Date.now().toString(36)}${crypto.getRandomValues(new Uint8Array(2)).join("")}`,
           transaction_desc: `Payment for ${activeBundle.title}`,
         }),
       });
@@ -115,21 +101,15 @@ export default function StarlinkBundles() {
     <div className="min-h-screen bg-[#f8fcfa]">
       <header className="bg-green-800 py-8">
         <div className="max-w-6xl mx-auto px-4 text-center">
-          <h1 className="text-3xl font-semibold text-white">
-            Starlink Data Bundles
-          </h1>
-          <p className="text-green-200 text-sm mt-1 font-bold">
-            Click BUY, works with the line you buy with from any network
-          </p>
-          <p className="text-green-200 text-sm mt-1">
-            Reliable high-speed internet for Kenya
-          </p>
+          <h1 className="text-3xl font-semibold text-white">Starlink Data Bundles</h1>
+          <p className="text-green-200 text-sm mt-1 font-bold">Click BUY, works with the line you buy with from any network</p>
+          <p className="text-green-200 text-sm mt-1">Reliable high-speed internet for Kenya</p>
         </div>
       </header>
 
       <div className="max-w-6xl mx-auto px-4 mt-6">
         <div className="flex flex-wrap gap-2 justify-center">
-          {["unlimited", "all", "daily", "weekly", "monthly"].map((cat) => (
+          {["unlimited", "all", "daily", "weekly", "monthly"].map(cat => (
             <button
               key={cat}
               onClick={() => setSelected(cat as Category)}
@@ -149,7 +129,7 @@ export default function StarlinkBundles() {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
           {filtered.map((bundle, index) => (
             <div
-              key={`${selected}-${index}-${bundle.id}`}
+              key={`${selected}-${index}-${bundle.id}`} // 🔥 THIS IS THE FIX
               className="relative bg-white rounded-lg p-4 border-2 border-green-500"
             >
               {bundle.badge && (
@@ -162,9 +142,7 @@ export default function StarlinkBundles() {
               <p className="text-xs text-gray-500">{bundle.subtitle}</p>
 
               <div className="mt-4 flex justify-between items-end">
-                <div className="text-lg font-bold text-green-700">
-                  Ksh {bundle.price}
-                </div>
+                <div className="text-lg font-bold text-green-700">Ksh {bundle.price}</div>
                 <button
                   onClick={() => {
                     setActiveBundle(bundle);
@@ -180,6 +158,7 @@ export default function StarlinkBundles() {
         </div>
       </main>
 
+      {/* Modal */}
       {showModal && activeBundle && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
           <div className="bg-green-50 max-w-sm w-full p-6 rounded-xl shadow-xl relative">
@@ -189,16 +168,10 @@ export default function StarlinkBundles() {
             >
               &times;
             </button>
-            <h2 className="text-xl font-semibold text-green-800 mb-2">
-              Starlink Payment
-            </h2>
-            <p className="text-green-700 text-xs mb-3 italic">
-              Enter M-Pesa number below you will be prompted to enter your PIN on
-              your phone.
-            </p>
-            <p className="text-green-700 text-sm mb-4">
-              {activeBundle.title} - Ksh {activeBundle.price}
-            </p>
+            <h2 className="text-xl font-semibold text-green-800 mb-2">Starlink Payment</h2>
+<p className="text-green-700 text-xs mb-3 italic">
+        Enter M-Pesa number below you will be prompted to enter your PIN on your phone.
+      </p>            <p className="text-green-700 text-sm mb-4">{activeBundle.title} - Ksh {activeBundle.price}</p>
             <input
               type="tel"
               placeholder="Enter your M-Pesa number"
@@ -211,25 +184,20 @@ export default function StarlinkBundles() {
               disabled={loadingId === activeBundle.id}
               className="w-full bg-green-600 text-white font-semibold py-2 rounded-md hover:bg-green-800 transition"
             >
-              {loadingId === activeBundle.id
-                ? "Processing..."
-                : `Pay Ksh ${activeBundle.price}`}
+              {loadingId === activeBundle.id ? "Processing..." : `Pay Ksh ${activeBundle.price}`}
             </button>
           </div>
         </div>
       )}
 
+      {/* Floating message */}
       {message && (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-green-700/90 text-white px-6 py-3 rounded-2xl shadow-lg text-sm z-50">
           {message}
         </div>
       )}
 
-      {/* ✅ ONLY FOOTER TEXT UPDATED */}
-      <footer className="text-center text-gray-400 text-[11px] py-5">
-        &copy; {new Date().getFullYear()} Starlink Bundles — Customer Care:
-        0755997593
-      </footer>
+      <footer className="text-center text-gray-400 text-[11px] py-5">&copy; {new Date().getFullYear()} Starlink Bundles</footer>
     </div>
   );
 }

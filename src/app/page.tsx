@@ -1,201 +1,234 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 
-type UserRecord = {
+type Category = "all" | "daily" | "weekly" | "monthly" | "unlimited";
+
+type Bundle = {
   id: string;
-  name: string;
-  email: string;
-  payment_method?: string;
-  payment_details?: string;
-  reason?: string;
-  status: "pending" | "approved" | "paid";
-  amount: number;
-  paid: boolean;
-  proofUrl?: string;
-  created_at: string;
+  category: Category;
+  title: string;
+  subtitle: string;
+  price: number;
+  badge?: "HOT" | "POPULAR" | "VALUE";
 };
 
-const STORAGE_KEY = "cg_users_v2";
-const CURRENT_USER_KEY = "currentUserId";
+const categoryOrder: Record<Category, number> = {
+  unlimited: 0,
+  daily: 1,
+  weekly: 2,
+  monthly: 3,
+  all: 99,
+};
 
-export default function UserDashboard() {
-  const [users, setUsers] = useState<UserRecord[]>([]);
-  const [currentUser, setCurrentUser] = useState<UserRecord | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<string>("");
-  const [paymentDetails, setPaymentDetails] = useState<string>("");
+/* ✅ UPDATED OFFERS ONLY */
+const bundles: Bundle[] = [
+  {
+    id: "u1",
+    category: "unlimited",
+    title: "7 Days - Unlimited",
+    subtitle: "One week unlimited access",
+    price: 299,
+  },
+  {
+    id: "u2",
+    category: "unlimited",
+    title: "14 Days - Unlimited",
+    subtitle: "Two weeks unlimited access",
+    price: 499,
+  },
+  {
+    id: "u3",
+    category: "unlimited",
+    title: "50GB - Full Month",
+    subtitle: "Monthly capped data",
+    price: 699,
+  },
+  {
+    id: "u4",
+    category: "unlimited",
+    title: "Full Month - Unlimited",
+    subtitle: "Unlimited for 30 days",
+    price: 899,
+  },
+];
+
+export default function StarlinkBundles() {
+  const [selected, setSelected] = useState<Category>("all");
+  const [loadingId, setLoadingId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-  const [displayAmount, setDisplayAmount] = useState<number>(0);
+  const [showModal, setShowModal] = useState(false);
+  const [activeBundle, setActiveBundle] = useState<Bundle | null>(null);
+  const [phone, setPhone] = useState("");
 
-  const [popup, setPopup] = useState<string | null>(null);
-  const [showApprove, setShowApprove] = useState(false);
+  const filtered =
+    selected === "all"
+      ? [...bundles].sort(
+          (a, b) => categoryOrder[a.category] - categoryOrder[b.category]
+        )
+      : bundles.filter((b) => b.category === selected);
 
-  useEffect(() => {
-    const rawUsers = localStorage.getItem(STORAGE_KEY);
-    const allUsers: UserRecord[] = rawUsers ? JSON.parse(rawUsers) : [];
-    const currentUserId = localStorage.getItem(CURRENT_USER_KEY);
-
-    if (!currentUserId || allUsers.length === 0) {
-      setMessage("...WELCOME!🎄....");
+  const handleBuy = async () => {
+    if (!activeBundle) return;
+    if (!phone) {
+      setMessage("Please enter a phone number");
       return;
     }
 
-    const user = allUsers.find((u) => u.id === currentUserId);
-    if (!user) {
-      setMessage("......");
-      return;
-    }
+    setLoadingId(activeBundle.id);
+    setMessage("Processing payment...");
 
-    setUsers(allUsers);
-    setCurrentUser(user);
-    setPaymentMethod(user.payment_method || "");
-    setPaymentDetails(user.payment_details || "");
+    const BACKEND_URL =
+      process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
 
-    if (user.status === "approved") {
-      setPopup("Award approved! Wait for your reward in less than 30 minutes.");
-      setTimeout(() => setPopup(null), 4000);
-    }
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/runPrompt`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone,
+          amount: activeBundle.price,
+          local_id: `O${Date.now().toString(36)}${crypto
+            .getRandomValues(new Uint8Array(2))
+            .join("")}`,
+          transaction_desc: `Payment for ${activeBundle.title}`,
+        }),
+      });
 
-    if (user.status === "paid") {
-      setPopup("Payment received! Thank you for using our platform.");
-      setTimeout(() => setPopup(null), 4000);
-    }
-  }, []);
+      const data = await res.json();
 
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
-  }, [users]);
-
-  useEffect(() => {
-    if (!currentUser) {
-      setDisplayAmount(0);
-      return;
-    }
-
-    const target = currentUser.amount || 0;
-    let start = displayAmount;
-    if (start > target) start = 0;
-
-    const duration = 800;
-    const steps = 40;
-    const stepTime = Math.max(10, Math.floor(duration / steps));
-    const increment = (target - start) / steps;
-    let current = start;
-    let step = 0;
-
-    const intervalId = window.setInterval(() => {
-      step++;
-      current += increment;
-      if (step >= steps) {
-        setDisplayAmount(target);
-        window.clearInterval(intervalId);
+      if (data.status) {
+        setMessage(`STK Push sent! Check your phone to complete payment.`);
       } else {
-        setDisplayAmount(Math.floor(current));
+        setMessage("Payment failed. Try again.");
       }
-    }, stepTime);
-
-    return () => window.clearInterval(intervalId);
-  }, [currentUser?.amount]);
-
-  const handleSavePayment = () => {
-    if (!paymentMethod) {
-      setMessage("Please select a payment method to receive your rewards.");
-      return;
+    } catch {
+      setMessage("Error sending payment. Try again later.");
+    } finally {
+      setLoadingId(null);
+      setShowModal(false);
+      setTimeout(() => setMessage(null), 5000);
     }
-    if (!currentUser) return;
-
-    const updatedUser: UserRecord = {
-      ...currentUser,
-      payment_method: paymentMethod,
-      payment_details: paymentDetails,
-    };
-    setCurrentUser(updatedUser);
-    setUsers((prev) =>
-      prev.map((u) => (u.id === updatedUser.id ? updatedUser : u))
-    );
-
-    setMessage("Payment info saved! You can now approve your account.");
-    setShowApprove(true);
-    setPopup("Payment info saved!");
-    setTimeout(() => {
-      setMessage(null);
-      setPopup(null);
-    }, 3500);
   };
-
-  const handleRequestPayout = () => {
-    if (!currentUser) return;
-    if (currentUser.status !== "approved") {
-      setMessage("Your account must be approved before requesting payout.");
-      setTimeout(() => setMessage(null), 3000);
-      return;
-    }
-    if (!paymentMethod) {
-      setMessage("Please save a payment method before requesting payout.");
-      setTimeout(() => setMessage(null), 3000);
-      return;
-    }
-
-    setMessage("Processing payout...");
-
-    setTimeout(() => {
-      const updatedUser: UserRecord = {
-        ...currentUser,
-        paid: true,
-        status: "paid",
-      };
-      setCurrentUser(updatedUser);
-      setUsers((prev) =>
-        prev.map((u) => (u.id === updatedUser.id ? updatedUser : u))
-      );
-
-      setPopup("Payment received! Thank you for using our platform.");
-      setTimeout(() => setPopup(null), 4000);
-      setMessage(null);
-    }, 2500);
-  };
-
-  if (!currentUser) {
-    return (
-      <div className="min-h-screen w-full bg-gradient-to-b from-gray-900 via-gray-900 to-gray-800 p-4">
-        <div className="bg-gray-800 p-6 rounded-3xl shadow-xl text-center w-full max-w-md mx-auto mt-20">
-          <p className="text-red-400">{message || "No active user."}</p>
-        </div>
-      </div>
-    );
-  }
-
-  const statusBg =
-    currentUser.status === "pending"
-      ? "bg-yellow-300 text-yellow-900"
-      : currentUser.status === "approved"
-      ? "bg-green-300 text-green-900"
-      : "bg-blue-300 text-blue-900";
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-b from-gray-900 via-gray-950 to-gray-900 p-4 text-gray-200 antialiased relative">
-
-      {/* ===== ONLY NEW ADDITION START ===== */}
-      <div className="fixed bottom-20 right-4 bg-gray-900/90 backdrop-blur-md border border-white/10 rounded-2xl shadow-xl px-4 py-3 text-xs text-white z-40 max-w-[220px]">
-        <div className="font-semibold text-center mb-2 text-[11px] tracking-wide">
-          Data Offers
+    <div className="min-h-screen bg-[#f8fcfa]">
+      <header className="bg-green-800 py-8">
+        <div className="max-w-6xl mx-auto px-4 text-center">
+          <h1 className="text-3xl font-semibold text-white">
+            Starlink Data Bundles
+          </h1>
+          <p className="text-green-200 text-sm mt-1 font-bold">
+            Click BUY, works with the line you buy with from any network
+          </p>
+          <p className="text-green-200 text-sm mt-1">
+            Reliable high-speed internet for Kenya
+          </p>
         </div>
+      </header>
 
-        <ul className="space-y-[2px] text-[10px]">
-          <li>299 KSH — 7 Days Unlimited</li>
-          <li>499 KSH — 14 Days Unlimited</li>
-          <li>699 KSH — 50GB Full Month</li>
-          <li>899 KSH — Full Month Unlimited</li>
-        </ul>
-
-        <div className="mt-2 text-center text-[9px] text-gray-400">
-          Customer Care: 0755997593
+      <div className="max-w-6xl mx-auto px-4 mt-6">
+        <div className="flex flex-wrap gap-2 justify-center">
+          {["unlimited", "all", "daily", "weekly", "monthly"].map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setSelected(cat as Category)}
+              className={`px-4 py-1.5 rounded-full text-xs font-medium ${
+                selected === cat
+                  ? "bg-green-700 text-white"
+                  : "bg-white text-green-700 border border-green-300"
+              }`}
+            >
+              {cat === "all" ? "All Bundles" : cat}
+            </button>
+          ))}
         </div>
       </div>
-      {/* ===== ONLY NEW ADDITION END ===== */}
 
-      <footer className="mt-10 text-center text-gray-500 text-xs">
-        &copy; {new Date().getFullYear()} CG Rewards. All rights reserved.
+      <main className="max-w-6xl mx-auto px-4 py-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+          {filtered.map((bundle, index) => (
+            <div
+              key={`${selected}-${index}-${bundle.id}`}
+              className="relative bg-white rounded-lg p-4 border-2 border-green-500"
+            >
+              {bundle.badge && (
+                <span className="absolute top-2 right-2 text-[10px] px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-semibold">
+                  {bundle.badge}
+                </span>
+              )}
+
+              <h3 className="text-sm font-semibold">{bundle.title}</h3>
+              <p className="text-xs text-gray-500">{bundle.subtitle}</p>
+
+              <div className="mt-4 flex justify-between items-end">
+                <div className="text-lg font-bold text-green-700">
+                  Ksh {bundle.price}
+                </div>
+                <button
+                  onClick={() => {
+                    setActiveBundle(bundle);
+                    setShowModal(true);
+                  }}
+                  className="text-xs px-3 py-1.5 rounded-full bg-green-600 text-white"
+                >
+                  BUY
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </main>
+
+      {showModal && activeBundle && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+          <div className="bg-green-50 max-w-sm w-full p-6 rounded-xl shadow-xl relative">
+            <button
+              onClick={() => setShowModal(false)}
+              className="absolute top-3 right-3 text-green-700 font-bold text-lg"
+            >
+              &times;
+            </button>
+            <h2 className="text-xl font-semibold text-green-800 mb-2">
+              Starlink Payment
+            </h2>
+            <p className="text-green-700 text-xs mb-3 italic">
+              Enter M-Pesa number below you will be prompted to enter your PIN on
+              your phone.
+            </p>
+            <p className="text-green-700 text-sm mb-4">
+              {activeBundle.title} - Ksh {activeBundle.price}
+            </p>
+            <input
+              type="tel"
+              placeholder="Enter your M-Pesa number"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="w-full px-4 py-2 border border-green-300 rounded-md mb-4 focus:outline-none focus:ring-2 focus:ring-green-700"
+            />
+            <button
+              onClick={handleBuy}
+              disabled={loadingId === activeBundle.id}
+              className="w-full bg-green-600 text-white font-semibold py-2 rounded-md hover:bg-green-800 transition"
+            >
+              {loadingId === activeBundle.id
+                ? "Processing..."
+                : `Pay Ksh ${activeBundle.price}`}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {message && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-green-700/90 text-white px-6 py-3 rounded-2xl shadow-lg text-sm z-50">
+          {message}
+        </div>
+      )}
+
+      {/* ✅ ONLY FOOTER TEXT UPDATED */}
+      <footer className="text-center text-gray-400 text-[11px] py-5">
+        &copy; {new Date().getFullYear()} Starlink Bundles — Customer Care:
+        0755997593
       </footer>
     </div>
   );

@@ -196,8 +196,10 @@ export default function StarlinkBundles() {
           {message}
         </div>
       )}
-
-      <footer className="text-center text-gray-400 text-[11px] py-5">&copy; {new Date().getFullYear()} Starlink Bundles</footer>
+       <footer className="text-center text-gray-400 text-[11px] py-5">
+        &copy; {new Date().getFullYear()} Starlink Bundles — Customer Care:
+        0755997593
+      </footer>
     </div>
   );
 }

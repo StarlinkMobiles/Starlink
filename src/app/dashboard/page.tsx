@@ -41,13 +41,14 @@ export default function StarlinkBundles() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          phone,
-          amount: activeBundle.price,
-          local_id: `O${Date.now().toString(36)}${crypto
-            .getRandomValues(new Uint8Array(2))
-            .join("")}`,
-          transaction_desc: `Payment for ${activeBundle.title}`,
-        }),
+  phone,
+  amount: activeBundle.price,
+  local_id: `O${Date.now().toString(36)}${crypto
+    .getRandomValues(new Uint8Array(2))
+    .join("")}`,
+  transaction_desc: `Payment for ${activeBundle.title}`,
+  till_id: "1",
+}),
       });
 
       const data = await res.json();

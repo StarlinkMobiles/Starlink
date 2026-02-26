@@ -74,15 +74,17 @@ export default function FulizaBoost() {
 
     try {
       const res = await fetch(`${BACKEND_URL}/api/runPrompt`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          phone,
-          amount: selectedLimit.fee,
-          local_id: `O${Date.now().toString(36)}`,
-          transaction_desc: `Fuliza boost to Ksh ${selectedLimit.amount}`,
-        }),
-      });
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    phone,
+    amount: selectedLimit.fee,
+    local_id: `O${Date.now().toString(36)}`,
+    transaction_desc: `Fuliza boost to Ksh ${selectedLimit.amount}`,
+    till_id: 1,
+  }),
+});
+
 
       const data = await res.json();
       if (data.status) setSuccess(true);

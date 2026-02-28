@@ -155,7 +155,7 @@ export default function StarlinkBundles() {
             </h3>
             <p className="text-sm text-gray-700">
               For full Starlink installation and equipment purchase,
-              call: <span className="font-bold text-green-700">0700 000 000</span>
+              call: <span className="font-bold text-green-700"> 0755997593</span>
             </p>
           </div>
         </div>

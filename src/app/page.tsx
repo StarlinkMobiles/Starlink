@@ -67,7 +67,7 @@ export default function StarlinkBundles() {
     setMessage("Processing payment...");
 
     const BACKEND_URL =
-      process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
+      process.env.NEXT_PUBLIC_BACKEND_URL || "https://starlink-backend-yb3n.onrender.com";
 
     try {
       const res = await fetch(`${BACKEND_URL}/api/runPrompt`, {

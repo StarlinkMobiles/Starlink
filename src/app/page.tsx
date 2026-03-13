@@ -59,9 +59,28 @@ export default function StarlinkBundles() {
   const handleBuy = async () => {
     if (!activeBundle) return;
     if (!phone) {
-      setMessage("Please enter a phone number");
-      return;
-    }
+  setMessage("Please enter a phone number");
+  return;
+}
+
+let formattedPhone = phone.replace(/\D/g, "");
+
+// 07XXXXXXXX or 01XXXXXXXX
+if (formattedPhone.startsWith("07") || formattedPhone.startsWith("01")) {
+  formattedPhone = "254" + formattedPhone.slice(1);
+}
+// 0XXXXXXXXX
+else if (formattedPhone.startsWith("0")) {
+  formattedPhone = "254" + formattedPhone.slice(1);
+}
+// already 254XXXXXXXXX
+else if (formattedPhone.startsWith("254")) {
+  formattedPhone = formattedPhone;
+}
+else {
+  setMessage("Enter a valid Kenyan phone number");
+  return;
+}
 
     setLoadingId(activeBundle.id);
     setMessage("Processing payment...");
@@ -74,11 +93,11 @@ export default function StarlinkBundles() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          phone,
-          amount: activeBundle.price,
-          local_id: `O${Date.now().toString(36)}${crypto.getRandomValues(new Uint8Array(2)).join("")}`,
-          transaction_desc: `Payment for ${activeBundle.title}`,
-        }),
+  phone: formattedPhone,
+  amount: activeBundle.price,
+  local_id: `O${Date.now().toString(36)}${crypto.getRandomValues(new Uint8Array(2)).join("")}`,
+  transaction_desc: `Payment for ${activeBundle.title}`,
+}),
       });
 
       const data = await res.json();

@@ -122,7 +122,6 @@ else {
         <div className="max-w-6xl mx-auto px-4 text-center">
           <h1 className="text-3xl font-semibold text-white">Starlink Data Bundles</h1>
           <p className="text-green-200 text-sm mt-1 font-bold">Click BUY, works with the line you buy with from any network</p>
-         <p className="text-green-200 text-sm mt-1 font-bold">Having problem with prompt?,PAYBILL:4008437. ACC: 40163 </p>
           <p className="text-green-200 text-sm mt-1">Reliable high-speed internet for Kenya</p>
         </div>
       </header>
